@@ -15,14 +15,16 @@ $ pnpm install --save modernjs-sitemap
 ```sh
 import { sitemapPlugin } from 'modernjs-sitemap'
 
-plugins: [..., sitemapPlugin()],
+plugins: [..., sitemapPlugin({
+    basepath: 'https://example.com'
+})],
 ```
 
 Props to extend configuration
 
 ```sh
-- basepath: *string
-- routes: *array with fields urlPath, priority, changefreq, entryName
+- *basepath: String
+- routes[]: Array with fields urlPath, priority, changefreq, entryName
 ```
 
 Example:
@@ -31,7 +33,7 @@ Example:
 import { sitemapPlugin } from 'modernjs-sitemap'
 
 plugins: [..., sitemapPlugin({
-    basepath: 'https://example.com.br',
+    basepath: 'https://example.com',
     routes: [{ urlPath: '/', priority: '0.2', entryName: 'index' }]
 })],
 ```
