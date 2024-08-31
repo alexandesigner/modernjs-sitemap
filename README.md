@@ -2,6 +2,12 @@
 
 > A basic plugin to generate the file with the application routes for https://modernjs.dev/
 
+<p>
+ <img alt="Static Badge" src="https://img.shields.io/badge/alexandesigner%2Fmodernjs-sitemap?style=flat-square&color=00a8f0">
+ <img alt="NPM Downloads" src="https://img.shields.io/npm/dm/modernjs-sitemap?style=flat-square&color=00a8f0">
+ <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square&color=00a8f0" alt="License" />
+</p>
+
 ## Get started
 
 **Using pnpm**
