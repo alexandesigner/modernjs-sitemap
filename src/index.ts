@@ -19,6 +19,7 @@ export const sitemapPlugin = ({
   routes,
   robots,
   outDir,
+  exclude,
 }: SitemapConfig) => ({
   name: 'modernjs-sitemap',
   async setup(api: any) {
@@ -72,6 +73,7 @@ export const sitemapPlugin = ({
         entrypoint,
         routes,
       }: ModifyFileSystemRoutesParams) {
+        let configuredRoutes = [];
         systemRoutes = getRoutes(routes) as StaticRoute[];
 
         // Parse SSG routes if they exist in the configuration
@@ -89,12 +91,19 @@ export const sitemapPlugin = ({
         }
 
         // Apply custom sitemap configurations from modern.config.ts
-        const configuredRoutes = applySitemapConfig(mergedRoutes, {
+        configuredRoutes = applySitemapConfig(mergedRoutes, {
           basepath,
           routes: sitemapConfig,
         });
 
-        await generateSitemap(basepath, configuredRoutes);
+        // Exclude routes from the sitemap if they are specified in the configuration
+        if (exclude) {
+          configuredRoutes = configuredRoutes.filter(
+            route => !exclude.includes(route.urlPath),
+          );
+        }
+
+        await generateSitemap(basepath, configuredRoutes, outDir);
 
         // Generate robots.txt if configuration is provided
         if (robots) {
@@ -113,6 +122,14 @@ export const sitemapPlugin = ({
        */
       async modifyServerRoutes({ routes }: ModifyServerRoutesParams) {
         serverRoutes = mergeRoutes(routes, mergedRoutes);
+
+        // Exclude routes from the sitemap if they are specified in the configuration
+        if (exclude) {
+          serverRoutes = serverRoutes.filter(
+            route => !exclude.includes(route.urlPath),
+          );
+        }
+
         return {
           routes: serverRoutes,
         };
