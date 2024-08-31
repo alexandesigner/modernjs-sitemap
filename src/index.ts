@@ -4,25 +4,63 @@ import type {
   Route,
   SitemapConfig,
   SitemapItem,
+  SSGRouteOptions,
   StaticRoute,
 } from './types';
-import { generateSitemap } from './generator';
-import { getRoutes, mergeRoutes } from './utils';
+import { generateRobotsTxt, generateSitemap } from './generator';
+import { createRouteObject, getRoutes, mergeRoutes } from './utils';
 
 /**
- * Sitemap plugin for Modern.js framework that generates sitemaps based on file system and server routes.
+ * Sitemap plugin for Modern.js framework that generates sitemaps and robots.txt based on file system and server routes.
  * @returns An object containing the plugin's name and setup function.
  */
-export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
-  name: '@modern-js/plugin-sitemap',
+export const sitemapPlugin = ({
+  basepath,
+  routes,
+  robots,
+  outDir,
+}: SitemapConfig) => ({
+  name: 'modernjs-sitemap',
   async setup(api: any) {
+    if (!basepath) {
+      throw new Error('basepath is required for sitemap generation.');
+    }
     const config = api.useConfigContext();
     const sitemapConfig = routes || [];
     const SSRModes = ['stream', 'string'];
     const ssgRoutes = config?.output?.ssg?.routes ?? [];
     let systemRoutes: StaticRoute[] = [];
     let serverRoutes: Route[] = [];
+    let mergedRoutes: Route[] = [];
 
+    /**
+     * Parses SSG routes to standardize their format.
+     * @param ssgRoutes Array of SSG routes to be parsed.
+     * @returns Array of parsed routes.
+     */
+    const parseSSGRoutes = (ssgRoutes: SSGRouteOptions[]): Route[] => {
+      return ssgRoutes.reduce((acc: Route[], route: SSGRouteOptions) => {
+        if (typeof route === 'string') {
+          acc.push(createRouteObject(route));
+        } else if (typeof route === 'object') {
+          if (!route?.params) {
+            acc.push(createRouteObject(route.url, route.output));
+            return acc;
+          }
+          for (const param of route.params) {
+            acc.push(
+              createRouteObject(
+                route.url.replace(':id', param.id),
+                '',
+                '.html',
+                route.headers,
+              ),
+            );
+          }
+        }
+        return acc;
+      }, []);
+    };
     return {
       /**
        * Modifies the file system routes and generates a sitemap if SSR is enabled.
@@ -36,31 +74,16 @@ export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
       }: ModifyFileSystemRoutesParams) {
         systemRoutes = getRoutes(routes) as StaticRoute[];
 
-        const ssgParseRoutes = ssgRoutes.reduce((acc: Route[], route: any) => {
-          if (typeof route === 'string') {
-            acc.push({
-              urlPath: route,
-              entryName: '',
-              entryPath: '.html',
-            });
-          } else if (typeof route === 'object') {
-            route.params.forEach((param: any) => {
-              acc.push({
-                urlPath: route.url.replace(':id', param.id),
-                entryName: '',
-                entryPath: '.html',
-                headers: route.headers,
-              });
-            });
-          }
-          return acc;
-        }, []);
+        // Parse SSG routes if they exist in the configuration
+        const ssgParsedRoutes = config?.output?.ssg
+          ? parseSSGRoutes(ssgRoutes)
+          : [];
+        mergedRoutes = [...systemRoutes, ...ssgParsedRoutes];
 
-        let mergedRoutes: Route[] = [...systemRoutes, ...ssgParseRoutes];
-
+        // Generate sitemap if SSR is enabled
         if (
           config?.server?.ssr ||
-          SSRModes?.includes(config?.server?.ssr?.mode)
+          SSRModes.includes(config?.server?.ssr?.mode)
         ) {
           mergedRoutes = mergeRoutes(routes, mergedRoutes);
         }
@@ -71,7 +94,12 @@ export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
           routes: sitemapConfig,
         });
 
-        await generateSitemap(basepath ?? '', configuredRoutes);
+        await generateSitemap(basepath, configuredRoutes);
+
+        // Generate robots.txt if configuration is provided
+        if (robots) {
+          generateRobotsTxt(robots, outDir ?? '/config/public');
+        }
 
         return {
           entrypoint,
@@ -84,8 +112,7 @@ export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
        * @returns The modified server routes.
        */
       async modifyServerRoutes({ routes }: ModifyServerRoutesParams) {
-        serverRoutes = mergeRoutes(routes, systemRoutes);
-
+        serverRoutes = mergeRoutes(routes, mergedRoutes);
         return {
           routes: serverRoutes,
         };
@@ -97,7 +124,7 @@ export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
 /**
  * Applies the custom sitemap configuration to the routes.
  * @param routes The original array of routes.
- * @param config The custom sitemap configuration from modern.config.ts.
+ * @param options The custom sitemap configuration from modern.config.ts.
  * @returns The updated array of routes with applied sitemap configurations.
  */
 function applySitemapConfig(
@@ -107,7 +134,7 @@ function applySitemapConfig(
     routes?: SitemapItem[];
   },
 ): Route[] {
-  const opts = new Map(options?.routes?.map(item => [item.urlPath, item]));
+  const opts = new Map(options.routes?.map(item => [item.urlPath, item]));
   return routes.map(route => {
     const customConfig = opts.get(route.urlPath);
     return customConfig

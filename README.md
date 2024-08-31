@@ -1,42 +1,41 @@
-# Sitemap
+# 🧭 Sitemap
 
 > A basic plugin to generate the file with the application routes for https://modernjs.dev/
+
+<p>
+ <img alt="Static Badge" src="https://img.shields.io/badge/alexandesigner%2Fmodernjs-sitemap?style=flat-square&color=00a8f0">
+ <img alt="NPM Downloads" src="https://img.shields.io/npm/dm/modernjs-sitemap?style=flat-square&color=00a8f0">
+ <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square&color=00a8f0" alt="License" />
+</p>
+
+Works with CSR/SSR/SSG
 
 ## Get started
 
 **Using pnpm**
 
 ```sh
-$ pnpm install --save modernjs-sitemap
+pnpm install --save modernjs-sitemap
 ```
 
-**Usage in project**
-
-```sh
-import { sitemapPlugin } from 'modernjs-sitemap'
-
-plugins: [..., sitemapPlugin({
-    basepath: 'https://example.com'
-})],
-```
-
-Props to extend configuration
-
-```sh
-- *basepath: String
-- routes[]: Array with fields urlPath, priority, changefreq, entryName
-```
-
-Example:
+**Usage**
 
 ```sh
 import { sitemapPlugin } from 'modernjs-sitemap'
 
 plugins: [..., sitemapPlugin({
     basepath: 'https://example.com',
-    routes: [{ urlPath: '/', priority: '0.2', entryName: 'index' }]
+    routes: [{ urlPath: '/', priority: '0.2' }] // Extend route config
 })],
 ```
+
+**Props to extend configuration**
+
+| Props  | Type | Description
+| ------------- | ------------- | ------------- |
+| basepath  | string  | url to site
+| routes  | array | with fields urlPath, priority, changefreq
+| robots  | boolean or object | true or object with fields userAgent, disallow, allow
 
 -----
 
@@ -87,4 +86,4 @@ Submit it in the [issues](https://github.com/alexandesigner/modernjs-sitemap/iss
 
 We'd love for you to help us. If you'd like to be a contributor, check out our <a href="https://github.com/alexandesigner/modernjs-sitemap/blob/master/.github/CONTRIBUTING.md" target="_blank">Contributing guide</a>
 
-<p>Designed with ♥ by <a target="_blank" href="https://github.com/alexandesigner" title="Allan Alexandre">Allan Alexandre</a>. Licensed under the <a target="_blank" href="https://github.com/vishnucss/vishnu#license" title="MIT License">MIT License</a>.</p>
+<p>Designed with ❤️ by <a target="_blank" href="https://github.com/alexandesigner" title="Allan Alexandre">Allan Alexandre</a>. Licensed under the <a target="_blank" href="https://github.com/alexandesigner/modernjs-sitemap#license" title="MIT License">MIT License</a>.</p>
