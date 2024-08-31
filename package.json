@@ -1,6 +1,6 @@
 {
   "name": "modernjs-sitemap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "types": "./dist/types/index.d.ts",
   "main": "./dist/lib/index.js",
   "module": "./dist/es/index.js",
