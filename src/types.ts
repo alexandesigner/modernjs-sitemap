@@ -33,8 +33,6 @@ export interface SitemapItem {
 }
 
 export interface SitemapConfig {
-  options: {
-    basepath?: string;
-    routes?: SitemapItem[];
-  };
+  basepath?: string;
+  routes?: SitemapItem[];
 }

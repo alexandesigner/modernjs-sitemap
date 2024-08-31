@@ -13,14 +13,15 @@ import { getRoutes, mergeRoutes } from './utils';
  * Sitemap plugin for Modern.js framework that generates sitemaps based on file system and server routes.
  * @returns An object containing the plugin's name and setup function.
  */
-export const sitemapPlugin = ({ options }: SitemapConfig) => ({
+export const sitemapPlugin = ({ basepath, routes }: SitemapConfig) => ({
   name: '@modern-js/plugin-sitemap',
   async setup(api: any) {
+    const config = api.useConfigContext();
+    const sitemapConfig = routes || [];
+    const SSRModes = ['stream', 'string'];
+    const ssgRoutes = config?.output?.ssg?.routes ?? [];
     let systemRoutes: StaticRoute[] = [];
     let serverRoutes: Route[] = [];
-
-    const config = api.useConfigContext();
-    const sitemapConfig = options || [];
 
     return {
       /**
@@ -35,23 +36,42 @@ export const sitemapPlugin = ({ options }: SitemapConfig) => ({
       }: ModifyFileSystemRoutesParams) {
         systemRoutes = getRoutes(routes) as StaticRoute[];
 
-        let mergedRoutes: Route[] = [...systemRoutes];
+        const ssgParseRoutes = ssgRoutes.reduce((acc: Route[], route: any) => {
+          if (typeof route === 'string') {
+            acc.push({
+              urlPath: route,
+              entryName: '',
+              entryPath: '.html',
+            });
+          } else if (typeof route === 'object') {
+            route.params.forEach((param: any) => {
+              acc.push({
+                urlPath: route.url.replace(':id', param.id),
+                entryName: '',
+                entryPath: '.html',
+                headers: route.headers,
+              });
+            });
+          }
+          return acc;
+        }, []);
+
+        let mergedRoutes: Route[] = [...systemRoutes, ...ssgParseRoutes];
 
         if (
           config?.server?.ssr ||
-          config?.server?.ssr?.mode === 'stream' ||
-          config?.server?.ssr?.mode === 'string'
+          SSRModes?.includes(config?.server?.ssr?.mode)
         ) {
-          mergedRoutes = mergeRoutes(routes, systemRoutes);
+          mergedRoutes = mergeRoutes(routes, mergedRoutes);
         }
 
         // Apply custom sitemap configurations from modern.config.ts
-        const configuredRoutes = applySitemapConfig(
-          mergedRoutes,
-          sitemapConfig,
-        );
+        const configuredRoutes = applySitemapConfig(mergedRoutes, {
+          basepath,
+          routes: sitemapConfig,
+        });
 
-        await generateSitemap(sitemapConfig?.basepath ?? '', configuredRoutes);
+        await generateSitemap(basepath ?? '', configuredRoutes);
 
         return {
           entrypoint,
@@ -88,22 +108,16 @@ function applySitemapConfig(
   },
 ): Route[] {
   const opts = new Map(options?.routes?.map(item => [item.urlPath, item]));
-
-  const parseRoutes = routes.map(route => {
+  return routes.map(route => {
     const customConfig = opts.get(route.urlPath);
-
-    if (customConfig) {
-      return {
-        ...route,
-        priority: customConfig.priority || '0.5',
-        changefreq: customConfig.changefreq || 'monthly',
-      };
-    }
-
-    return route;
+    return customConfig
+      ? {
+          ...route,
+          priority: customConfig.priority || '0.5',
+          changefreq: customConfig.changefreq || 'monthly',
+        }
+      : route;
   });
-
-  return parseRoutes;
 }
 
 export default sitemapPlugin;
