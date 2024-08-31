@@ -1,0 +1,63 @@
+{
+  "name": "modernjs-sitemap",
+  "version": "0.1.0",
+  "types": "./dist/types/index.d.ts",
+  "main": "./dist/lib/index.js",
+  "module": "./dist/es/index.js",
+  "keywords": [
+    "sitemap",
+    "modern.js",
+    "ssr",
+    "ssg"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexandesigner/modernjs-sitemap.git"
+  },
+  "author": "Allan Alexandre",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexandesigner/modernjs-sitemap/issues"
+  },
+  "scripts": {
+    "prepare": "modern build && husky install",
+    "dev": "modern dev",
+    "build": "modern build",
+    "build:watch": "modern build -w",
+    "reset": "rimraf ./**/node_modules",
+    "lint": "modern lint",
+    "change": "modern change",
+    "bump": "modern bump",
+    "pre": "modern pre",
+    "change-status": "modern change-status",
+    "gen-release-note": "modern gen-release-note",
+    "release": "modern release",
+    "new": "modern new",
+    "upgrade": "modern upgrade"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "node --max_old_space_size=8192 ./node_modules/eslint/bin/eslint.js --fix --color --cache --quiet"
+    ]
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "dist/"
+  ],
+  "devDependencies": {
+    "@modern-js/core": "^2.58.3",
+    "@modern-js/eslint-config": "2.58.3",
+    "@modern-js/module-tools": "2.58.3",
+    "@types/node": "~16.11.7",
+    "husky": "~8.0.1",
+    "lint-staged": "~13.1.0",
+    "prettier": "~2.8.1",
+    "rimraf": "~6.0.1",
+    "typescript": "~5.0.4"
+  },
+  "sideEffects": [],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
